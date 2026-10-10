@@ -1,0 +1,13 @@
+{
+  "_comment": "Download sources for the external tools. 'sha256' is verified when non-empty; the build log prints the real hash of every download so you can pin it here after reviewing it.",
+  "realesrgan": {
+    "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-windows.zip",
+    "sha256": "",
+    "license": "Real-ESRGAN (BSD-3-Clause) / Real-ESRGAN-ncnn-vulkan (MIT) - verify upstream before redistributing"
+  },
+  "ffmpeg": {
+    "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
+    "sha256": "",
+    "license": "FFmpeg GPL build (GPL-3.0-or-later) - redistribution requires GPL compliance"
+  }
+}
