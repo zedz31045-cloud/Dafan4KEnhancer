@@ -1,0 +1,6 @@
+# Runtime dependencies (pinned). Tested target: Python 3.12 on Windows 10/11.
+customtkinter==5.2.2
+Pillow==10.4.0
+numpy==1.26.4
+opencv-python-headless==4.10.0.84
+tkinterdnd2==0.4.2
