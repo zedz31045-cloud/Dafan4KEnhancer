@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+build/
+dist/
+release/
+*.spec.bak
+.pytest_cache/
+.idea/
+.vscode/
+# tools and models are downloaded at build/run time - never commit them
+tools/*
+!tools/.gitkeep
+models/*
+!models/.gitkeep
+selftest-result.json
