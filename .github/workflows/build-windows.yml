@@ -1,0 +1,88 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests (Linux, fake engine + real FFmpeg)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+
+  build:
+    name: Build EXE (Windows)
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Generate icon
+        run: python scripts/make_icon.py
+
+      - name: Download Real-ESRGAN and FFmpeg (not stored in git)
+        run: python scripts/fetch_tools.py
+
+      - name: Verify tools and models
+        run: python scripts/verify_tools.py
+
+      - name: Build with PyInstaller
+        run: pyinstaller --noconfirm Dafan4KEnhancer.spec
+
+      - name: Assemble release ZIP
+        run: python scripts/package.py
+
+      - name: Smoke-test the built EXE
+        shell: pwsh
+        run: |
+          $exe = "dist/Dafan4KEnhancer/Dafan4KEnhancer.exe"
+          if (-not (Test-Path $exe)) { Write-Error "EXE not found"; exit 1 }
+          $p = Start-Process -FilePath $exe -ArgumentList "--selftest","--selftest-gui","--selftest-out","selftest-result.json" -Wait -PassThru
+          if (Test-Path selftest-result.json) { Get-Content selftest-result.json }
+          if ($p.ExitCode -ne 0) { Write-Error "Self-test failed (exit code $($p.ExitCode))"; exit 1 }
+
+      - name: Upload release ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dafan4KEnhancer-windows-x64
+          path: release/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload build diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-diagnostics
+          path: |
+            build/**/warn-*.txt
+            selftest-result.json
+          if-no-files-found: ignore
